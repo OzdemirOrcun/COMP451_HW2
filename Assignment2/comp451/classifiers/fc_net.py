@@ -213,10 +213,10 @@ class FullyConnectedNet(object):
         #                                                                          #
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-        l_dims =np.hstack([input_data,hidden_dims,num_classes])
+        l_dims =np.hstack([input_dim,hidden_dims,num_classes])
         for i in range(self.num_layers):
             self.params['W'+str(i+1)] = weight_scale*np.random.randn(l_dims[i],l_dims[i+1])
-            self.params['b'+str(i+1)] = np.zeros(layers_dims[i+1])
+            self.params['b'+str(i+1)] = np.zeros(l_dims[i+1])
 
         
 
@@ -269,8 +269,8 @@ class FullyConnectedNet(object):
         lrelu_param['alpha'] = self.alpha
         
         
-        for i in xrange(self.num_layers-1):    
-            layer_input, ar_cache[i] = affine_relu_forward(layer_input, self.params['W%d'%(i+1)], self.params['b%d'%(i+1)], \
+        for i in range(self.num_layers-1):    
+            layer_input, ar_cache[i] = affine_lrelu_forward(layer_input, self.params['W%d'%(i+1)], self.params['b%d'%(i+1)], \
             lrelu_param = lrelu_param)
             
             if self.use_dropout:
@@ -278,7 +278,7 @@ class FullyConnectedNet(object):
         
 
         ar_out, ar_cache[self.num_layers] = affine_forward(layer_input, self.params['W%d'%(self.num_layers)], \
-        self.params['b%d'%(self.num_layers)],lrelu_param = lrelu_param)
+        self.params['b%d'%(self.num_layers)])
         scores = ar_out
 
 
@@ -315,7 +315,7 @@ class FullyConnectedNet(object):
         grads['W%d'%(self.num_layers)] = dw + self.reg * self.params['W%d'%(self.num_layers)]
         grads['b%d'%(self.num_layers)] = db
         dhout = dx
-        for idx in xrange(self.num_layers-1):
+        for idx in range(self.num_layers-1):
             lay = self.num_layers - 1 - idx - 1
             loss = loss + 0.5 * self.reg * np.sum(self.params['W%d'%(lay+1)] * self.params['W%d'%(lay+1)])
             if self.use_dropout:
@@ -324,8 +324,9 @@ class FullyConnectedNet(object):
             dx, dw, db = affine_lrelu_backward(dhout, ar_cache[lay])
             grads['W%d'%(lay+1)] = dw + self.reg * self.params['W%d'%(lay+1)]
             grads['b%d'%(lay+1)] = db
-            
+
             dhout = dx
+            
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
         #                             END OF YOUR CODE                             #
