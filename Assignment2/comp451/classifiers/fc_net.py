@@ -60,6 +60,8 @@ class ThreeLayerNet(object):
         self.params['b1'] = np.zeros(hidden_dim[0])
         self.params['b2'] = np.zeros(hidden_dim[1])
         self.params['b3'] = np.zeros(num_classes)
+        
+        
 
 
 
@@ -100,10 +102,12 @@ class ThreeLayerNet(object):
         b1 = self.params['b1']
         b2 = self.params['b2']
         b3 = self.params['b3']
+        lrelu_param = {}
+        lrelu_param['alpha'] = self.alpha
         
-        X2, lrelu_cache = affine_lrelu_forward(X,W1,b1)
-        X3, lrelu2_cache = affine_lrelu_forward(X2,W2,b2)
-        scores,lrelu3_cache = affine_lrelu_forward(X3,W3,b3)
+        X2, lrelu_cache = affine_lrelu_forward(X,W1,b1,lrelu_param = lrelu_param)
+        X3, lrelu2_cache = affine_lrelu_forward(X2,W2,b2,lrelu_param = lrelu_param)
+        scores,lrelu3_cache = affine_lrelu_forward(X3,W3,b3,lrelu_param = lrelu_param)
 
 
         
@@ -134,7 +138,7 @@ class ThreeLayerNet(object):
         loss, softmax_gradient = softmax_loss(scores,y)
         loss += self.reg * L2_reg * 0.5
         
-        dx3,dw3,db3 = affine_lrelu_backward(softmax_grad,lrelu3_cache)
+        dx3,dw3,db3 = affine_lrelu_backward(softmax_gradient,lrelu3_cache)
         dx2,dw2,db2 = affine_lrelu_backward(dx3,lrelu2_cache)
         dx,dw,dv = affine_lrelu_backward(dx2,lrelu_cache)
         
@@ -143,7 +147,7 @@ class ThreeLayerNet(object):
         grads['W1'] = dw + self.reg * W1
         grads['b3'] = db3
         grads['b2'] = db2
-        grads['b1'] = db
+        grads['b1'] = dv
         
 
 
@@ -210,7 +214,7 @@ class FullyConnectedNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         l_dims =np.hstack([input_data,hidden_dims,num_classes])
-        for i range(0,self.num_layers):
+        for i in range(self.num_layers):
             self.params['W'+str(i+1)] = weight_scale*np.random.randn(l_dims[i],l_dims[i+1])
             self.params['b'+str(i+1)] = np.zeros(layers_dims[i+1])
 
@@ -258,13 +262,27 @@ class FullyConnectedNet(object):
         #                                                                          #
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+        layer_input = X
+        ar_cache = {}
+        dp_cache = {}
+        lrelu_param = {}
+        lrelu_param['alpha'] = self.alpha
+        
+        
+        for i in xrange(self.num_layers-1):    
+            layer_input, ar_cache[i] = affine_relu_forward(layer_input, self.params['W%d'%(i+1)], self.params['b%d'%(i+1)], \
+            lrelu_param = lrelu_param)
+            
+            if self.use_dropout:
+                layer_input,  dp_cache[lay] = dropout_forward(layer_input, self.dropout_param)
+        
+
+        ar_out, ar_cache[self.num_layers] = affine_forward(layer_input, self.params['W%d'%(self.num_layers)], \
+        self.params['b%d'%(self.num_layers)],lrelu_param = lrelu_param)
+        scores = ar_out
 
 
-
-
-
-
-        pass
+        
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -289,11 +307,25 @@ class FullyConnectedNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-
-
-
-
-        pass
+        loss, dscores = softmax_loss(scores, y)
+        dhout = dscores
+        L2_reg = np.sum(self.params['W%d'%(self.num_layers)] * self.params['W%d'%(self.num_layers)] * self.params['W%d'%(self.num_layers)])
+        loss = loss + 0.5 * self.reg * L2_reg
+        dx , dw , db = affine_backward(dhout , ar_cache[self.num_layers])
+        grads['W%d'%(self.num_layers)] = dw + self.reg * self.params['W%d'%(self.num_layers)]
+        grads['b%d'%(self.num_layers)] = db
+        dhout = dx
+        for idx in xrange(self.num_layers-1):
+            lay = self.num_layers - 1 - idx - 1
+            loss = loss + 0.5 * self.reg * np.sum(self.params['W%d'%(lay+1)] * self.params['W%d'%(lay+1)])
+            if self.use_dropout:
+                dhout = dropout_backward(dhout ,dp_cache[lay])
+           
+            dx, dw, db = affine_lrelu_backward(dhout, ar_cache[lay])
+            grads['W%d'%(lay+1)] = dw + self.reg * self.params['W%d'%(lay+1)]
+            grads['b%d'%(lay+1)] = db
+            
+            dhout = dx
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
         #                             END OF YOUR CODE                             #
