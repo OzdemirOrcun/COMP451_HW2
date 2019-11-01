@@ -28,6 +28,8 @@ def affine_forward(x, w, b):
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     
     reshaped_X = x.reshape(x.shape[0],-1)
+    #print(w.shape)
+    #print(reshaped_X.shape)
     out = np.dot(reshaped_X,w) + b
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -35,6 +37,7 @@ def affine_forward(x, w, b):
     #                             END OF YOUR CODE                            #
     ###########################################################################
     cache = (x, w, b)
+    #print(w.shape)
     return out, cache
 
 
@@ -231,7 +234,7 @@ def dropout_forward(x, dropout_param):
         # Store the dropout mask in the mask variable.                        #
         #######################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-        drop_rate = np.random.rand(x.shape)
+        drop_rate = np.random.rand(*x.shape)
         mask = (drop_rate < p) / p
         out = x * mask
 
