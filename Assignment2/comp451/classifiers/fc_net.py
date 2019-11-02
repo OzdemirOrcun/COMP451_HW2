@@ -274,7 +274,7 @@ class FullyConnectedNet(object):
             lrelu_param = lrelu_param)
             
             if self.use_dropout:
-                layer_input,  dp_cache[lay] = dropout_forward(layer_input, self.dropout_param)
+                layer_input,  dp_cache[i] = dropout_forward(layer_input, self.dropout_param)
         
 
         ar_out, ar_cache[self.num_layers] = affine_forward(layer_input, self.params['W%d'%(self.num_layers)], \
