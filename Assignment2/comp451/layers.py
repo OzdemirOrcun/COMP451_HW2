@@ -329,22 +329,26 @@ def conv_forward_naive(x, w, b, conv_param):
     # Hint: you can use the function np.pad for padding.                      #
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-    stride = conv_param['stride']
-    pad = conv_param['pad']
-                        
-
-
+    S = conv_param['stride']
+    P = conv_param['pad']
+    N,C,H,W = x.shape
+    F,C,HH,WW = w.shape
+    X_pad = np.pad(x,((0,),(0,),(P,),(P,)),'constant')
+    
+    Hh = 1 + int((H + 2 * P - HH) / S)
+    Hw = 1 + int((W + 2 * P - WW) / S)
+    out = np.zeros((N,F,Hh,Hw))
+    
+    
+    for i in range(N):
+        for k in range(F):
+            for j in range(Hh):
+                for l in range(Hw):
+                    out[i,k,j,l] = np.sum(X_pad[i,:,j * S:j *
+                                                S + HH, l * S:l * S + WW] * w[k,:])
+                    out[i,k,j,l] += b[k]
     
 
-
-
-
-
-
-
-
-
-    pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -435,11 +439,22 @@ def max_pool_forward_naive(x, pool_param):
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
 
-
-
-
-
-    pass
+    Hp = pool_param['pool_height']
+    Wp = pool_param['pool_width']
+    S = pool_param['stride']
+    
+    N,C,H,W = x.shape
+    H1 = 1 + int((H - Hp) / S) 
+    W1 = 1 + int((W - Wp) / S)
+    
+    out = np.zeros((N, C, H1, W1))
+    
+    for i in range(N):
+        for j in range(C):
+            for z in range(H1):
+                for t in range(W1):
+                    out[i,j,z,t] = np.max(x[i,j,z * S:z * S + Hp,t * S:t * S + Wp])
+                    
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -465,12 +480,35 @@ def max_pool_backward_naive(dout, cache):
     # TODO: Implement the max-pooling backward pass                           #
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+    
+    x, pool_param = cache
+    
+    Hp = pool_param['pool_height']
+    Wp = pool_param['pool_width']
+    S = pool_param['stride']
+
+    N, C, H, W = x.shape
+    H1 = 1 + int((H - Hp) / S)
+    W1 = 1 + int((W - Wp) / S)
+    dx = np.zeros((N, C, H, W))
+    
+    for ihead in range(N):
+        for jhead in range(C):
+            for k in range(H1):
+                for z in range(W1):
+                    x_pool = x[ihead,jhead,
+                               k * S:k * S + Hp, z * S:z * S + Wp]
+                    max_ = np.max(x_pool)
+                    #if max_ == x_pool:
+                    x_mask = x_pool == max_
+                    a = dx[ihead,jhead,k * S:k * S + Hp, z * S:z * S
+                       + Wp] 
+                    a = a + dout[ihead,jhead,k,z] * x_mask
 
 
 
 
-
-    pass
+    
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
