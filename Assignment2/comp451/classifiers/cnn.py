@@ -56,12 +56,44 @@ class ThreeLayerConvNet(object):
         # the start of the loss() function to see how that happens.                #
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+        C,H,W = input_dim
+        
+        F = num_filters
+        filter_h = filter_size
+        filter_w = filter_size
+        stride_convol = 1
+        P = (filter_size -1) / 2
+        Hc = int((H + 2 * P - filter_h) / stride_convol) + 1
+        Wc = int((W + 2 * P - filter_w) / stride_convol) + 1
+        
+        W1 = weight_scale * np.random.randn(F,C,filter_h,filter_w)
+        b1 = np.zeros(F)
+        
+        pool_w,pool_h,pool_s = 2,2,2
+        Hp = int((Hc - pool_h) / pool_s) + 1
+        Wp = int((Wc - pool_w) / pool_s) + 1
+        
+        
+        Hh = hidden_dim
+        W2 = weight_scale * np.random.randn(F * Hp * Wp, Hh)
+        b2 = np.zeros(Hh)
+        
+        
+        
+        Hc = num_classes
+
+        W3 = weight_scale * np.random.randn(Hh, Hc)
+
+        b3 = np.zeros(Hc)
 
 
-
-
-
-        pass
+        self.params['W1'] = W1
+        self.params['W2'] = W2
+        self.params['W3'] = W3
+        self.params['b1'] = b1 
+        self.params['b2'] = b2 
+        self.params['b3'] = b3
+       
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -100,10 +132,21 @@ class ThreeLayerConvNet(object):
         # comp451/layer_utils.py in your implementation (already imported).         #
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+        lrelu_param = {}
+        lrelu_param['alpha'] = self.alpha
 
-
-
-        pass
+        conv_layer, cache_conv_layer = conv_lrelu_pool_forward(
+            X,W1,b1,conv_param = conv_param,pool_param = pool_param,lrelu_param = lrelu_param)
+        
+        N, F, Hp, Wp = conv_layer.shape
+        x = conv_layer.reshape((N, F * Hp * Wp))
+        
+        hidden_layer,cache_hidden_layer = affine_lrelu_forward(x,W2,b2,lrelu_param = lrelu_param)
+        N, Hh = hidden_layer.shape
+        
+        scores,cache_scores = affine_forward(hidden_layer,W3,b3)
+        
+       
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -126,12 +169,29 @@ class ThreeLayerConvNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
+        L2_reg = np.sum(W1**2) + np.sum(W2**2) + np.sum(W3**2)
+        data_loss, dscores = softmax_loss(scores, y)
+        loss_ = 0.5 * self.reg * L2_reg
+        loss = data_loss + loss_
+        
 
+        grads = {}
+        dx3, dW3, db3 = affine_backward(dscores, cache_scores)
+        dW3 =  dW3 + self.reg * W3
+        
+        dx2, dW2, db2 = affine_lrelu_backward(dx3, cache_hidden_layer)
+        dW2 = dW2 + self.reg * W2
+        
+        dx2 = dx2.reshape(N, F, Hp, Wp)
+        dx, dW1, db1 = conv_lrelu_pool_backward(dx2, cache_conv_layer)
+        dW1 = dW1 + self.reg * W1
 
-
-
-
-        pass
+        self.grads['W1'] = dW1
+        self.grads['W2'] = dW2
+        self.grads['W3'] = dW3
+        self.grads['b1'] = db1
+        self.grads['b2'] = db2
+        self.grads['b3'] = db3
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
