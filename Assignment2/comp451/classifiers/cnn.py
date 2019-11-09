@@ -186,12 +186,12 @@ class ThreeLayerConvNet(object):
         dx, dW1, db1 = conv_lrelu_pool_backward(dx2, cache_conv_layer)
         dW1 = dW1 + self.reg * W1
 
-        self.grads['W1'] = dW1
-        self.grads['W2'] = dW2
-        self.grads['W3'] = dW3
-        self.grads['b1'] = db1
-        self.grads['b2'] = db2
-        self.grads['b3'] = db3
+        grads['W1'] = dW1
+        grads['W2'] = dW2
+        grads['W3'] = dW3
+        grads['b1'] = db1
+        grads['b2'] = db2
+        grads['b3'] = db3
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
