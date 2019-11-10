@@ -500,7 +500,7 @@ def max_pool_backward_naive(dout, cache):
                                k * S:k * S + Hp, z * S:z * S + Wp]
                     max_ = np.max(x_pool)
                     x_mask = x_pool == max_
-                    dx[ihead,jhead,k * S:k * S + Hp, z * S:z * S + Wp] +=                                   dout[ihead,jhead,k,z] * x_mask
+                    dx[ihead,jhead,k * S:k * S + Hp, z * S:z * S + Wp] += dout[ihead,jhead,k,z] * x_mask
 
                    
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
